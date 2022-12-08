@@ -21,10 +21,94 @@ a.birk@jacobs-university.de}}}
 \nocite{*}
 
 \begin{document}
+\maketitle
 \begin{abstract}
     This article gives an overview introduction to Simultaneous Localization And Mapping (SLAM), i.e., probalistic methods to generate 2D or 3D map of unknown areas under imperfect localization. The article provides a survey of the theoretical basis of SLAM as well as the core of background information about the underlying techniques for implementing actual SLAM systems.
 \end{abstract}
-\maketitle
+
+\section{Introduction}
+
+Simultaneous Localization And Mapping (SLAM) deals with the chicken and egg problem of building a map, which requires localization, while using this map for localization. The term SLAM is used for the problem itself as wellas for the algorithmic solutions trying to solve it. The term originated in the robotics community but there arestrong links to other research areas where the problem is also investigated, respectively where SLAM algorithmsthat originated in robotics research are used for other mobile systems than robots. Examples include Geosciences,especially Geodesy and Geomatics, or Automotive Engineering, especially with respect to building road databases for car navigation systems and the increasing trend towards autonomous driving. In general, the task is to localizea mobile system, which may have any kind of propulsion system. Application examples hence cover all forms ofground, aerial, and marine robots.  But applications of SLAM also include human operated vehicles like cars or theoption to place a sensor suite manually at different locations in the environment, e.g., in surveying applications. SLAM has also been performed in multiple applications using pedestrians as mobile platform ir while moving sensors by hand around objects. In the following, we will refer to the to be localized platform simply as the "robot" for the sake of convenience.
+
+The robot has at any moment \textit{t} in time a 6 degree of freedom (6-DoF) position and orientation in 3D space - or short pose $X_{t}$ - consisting of its Cartesian coordinates and its Roll-Pitch-Yaw (RPY) angles, i.e., $X_{t} = \left(x_{0},x_{1},x{3},\theta_{R},\theta_{P},\theta_{Y}\right)^T$. We assume without loss of generality that $x_{0} = 0$. Historically and from viewpoint of a significant amount of application examples a substantial part of SLAM research concentrates on only 2D space, i.e., a 3-DoF robot pose with $X_{t} = \left( x_{0},x_{1},\theta\right)^T$
+
+The robot has one or multiple sensors with which it observes its environment. The sensor readings at time \textit{t} are denoted with $\mathit{z_{t}}$. The sensor readings are processed into a map $\mathit{m_{t}}$. There are in principle two different ways in which environment observations can be incorporated into SLAM (\cref{fig:figureune}). First, the environment sensor(s) can recognize and localize natural landmarks, i.e., environment features that can be identified at fixed locations. This can for example be visually distinct spot in the environment that is detected and localized via a stereo camera on the robot. Two subsequent observations of this landmark at times \textit{t} and $\mathit{t}+1$ allow to estimate tge relative motion $\delta X_{t}$ of the robot, i.e., the relative change in poses that is denoted as follows : $X_{t} = X_{t} \oplus \delta X_{t}$.
+
+An essential element of SLAM is to consider the uncertainty of each motion estimate, respectively of each pose estimate derived from it. We can therefore associate a probability distribution $\mathit{P}\left(X_{t}\right)$ for each time step \textit{t}. The robot's motions over time or short trajectory from the start $\mathit{t} = 0$ to a moment $\mathit{t} = \mathit{k}$ leads to a sequence of poses or short a path that is denoted with $x_{0:\mathit{k}}$. The related environment observations, control inputs, and maps are accordingly denoted with $z_{0:\mathit{k}}$, $u_{0:\mathit{k}}$ and $m_{0:\mathit{k}}$. Each sequential motion estimate increases the uncertainty in the robot's localization. \cref{fig:figuredeux} shows an example where we assume a Gaussian distribution for the pose estimates. The Covariance in $\mathit{x_{0}}$ and $\mathit{x_{1}}$, i.e., along the Cartesian x- and y-axis, can the be illustrated using ellipses - the orientation $\theta$ is omitted for the sake of simplicity. Each motion estimate introduces additional uncertainty and the overall error grows in an unbounded fashion. 
+
+\section{SLAM Frontend}
+\subsection{Ergomotion Estimation with Internal Sensors and Modem}
+For mobile robots, the process of estimating their motion from internal sensors - also known as interoreptive sensors in contrast to exteroceptive or external environment sensors - is known as odometry [1, 2]. Given motor control input $\mathit{u_{t}}$, respectively actual motor speeds measured by rotational encoders, the robots motion can be determined
+\begin{figure}
+    \centering
+    \includegraphics{images/fig1.png}
+    \caption{Environment sensors can be incorporated in two substantially different ways to perform SLAM. First, there is the option to recognize and localize landmarks, i.e., fixed unique locations in the environment, to estimate the motion of the robot (top). Second, constraints can be generated by registration, i.e., the spatial alignment of two overlapping sensor readings (bottom).}
+    \label{fig:figureune}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{images/fig2.png}
+    \caption{SLAM uncertainty}
+    \label{fig:figuredeux}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{tabular}{c c c}
+         \includegraphics{images/figa.png} & \includegraphics{images/figb.png} & \includegraphics{images/figc.png}\\ (a) & (b) & (c)\\
+         \includegraphics{images/figd.png} & \includegraphics{images/fige.png} & \includegraphics{images/figf.png} \\ (d) & (e) & (f)\\
+    \end{tabular}
+    \caption{Comparisons of map constructed from ZED scan(down) and LIDAR scan(top). (a) LIDAR scan; (b)LIDAR scan + ZED odom; (c)LIDAR scan + ZED odom + IMU; (d)ZED scan; (e)ZED scan + ZED odom; (f)ZED scan + ZED odom + IMU.}
+    \label{fig:images}
+\end{figure}
+
+\begin{quote}
+     by forward kinematics. An important example is the differential drive (also known as a kinematic cart), i.e., a robot with two wheels that can be driven at different speeds. The control inputs, respectively measured speed, for the left and the right motor are sampled at fixed time intervals $\mathit{\delta}\mathit{t}$. Given the mechanical set-up of the gearbox and the wheel diameter, the motor-speeds can be used to determine the distance $\mathit{s_{l}}$ respectively $\mathit{s_{r}}$ the left, respectively right, wheel traveled in the time interval. Given the constant distance \textit{b} between the two wheels, the change in pose $\delta x_{t}= \left(\delta x_{0}, \delta x_{1}, \mathit{\delta}\mathit{\theta}\right)^T$ can be completed as follows [3]:
+\end{quote}
+    
+    
+
+ \begin{equation}
+     X_{\textit{t}+1} = X_{\textit{t}} + delta X_{\textit{t}} = X_{t} + \left(\begin{array}{c} \textit{s}\cos(\theta_{\textit{t}}+ \delta \theta/2)\\ \textit{s}\sin(\theta_{\textit{t}}+ \delta \theta/2) \\ \delta \theta \end{array} \right)
+ \end{equation}
+ with 
+\begin{center}
+    $s = \frac{s_{r}+s_{l}}{2}\hspace{1em}\text{and}\hspace{1em}\delta \theta = \frac{s_{r}-s_{l}}{b}$
+\end{center}
+
+
+
+ Given two parameters $\mathit{k_{r}}$ and $\mathit{k_{l}}$ to cover probabilistic aspects of the motor drive and of the wheel-floor interaction, the following covariance matrix $\Sigma_{s}$ can be assumed for the motionb increment: 
+
+ \begin{equation}
+     \Sigma_{s}= \left(\begin{array}{cc} k_{r}s_{r} & 0\\ 0 & k_{l}s_{l}    \end{array}\right)
+ \end{equation}
+
+ \section{Experimental results}
+ As is known, the quality of the map depends heavily on the initial pose of AGV. The odometry was recognized as one the methods that could provide high precision pose estimation in a short period of time. Similarly, the accurate orientation of AGV could also be provided by IMU. Therefore, the maps build by algorithms combining the odometry and IMU are superior to those build by single sensor-based algorithms. 
+
+ An intuitive observation of above maps did not help us determine which was the best choice. Next, the lengths of maps generated above were also compared with the ground truth, and the metric, calculating the proportion of occupied cells in map as the sum of occupied cells divided by number of free cells (see, \cref{my_first_equation}), as described in the paper [3] were used to compare the quality of above maps. Generally, the proportion of occupied cells correspond to the quality of the map: the higher this proportion - the lower quality of the map. And it should be noted that the metric calculating the proportion of occupied cells should be used only as a part of a complex analysis.  
+
+ \begin{table}[H]
+     \centering
+     \begin{tabular}{l l c c c c}
+        \hline 
+              \text{} & \text{Combinations} & \text{Measure(m)} & \text{Truth (m)} & \text{Error (m)} & \text{Proportion (\%)}\\
+        \hline
+        \multirow{3}{*}{LIDAR combinations} &LIDAR scan & 5.722 & 5.901 & 0.179 & 13.6 \\ &LIDAR scan + ZED odom & 5.808 & 5.901 & 0.093 & 10.0 \\ &LIDAR scan + ZED odom + IMU & 5.827 & 5.901 & 0.074 & 10.7\\
+        \multirow{3}{*}{ZED combinations} &ZED scan & 5.405 & 5.901 & 0.496 & 19.9\\&ZED scan + ZED odom & 5.655 & 5.901 & 0.246 & 19.6 \\ &ZED scan + ZED odom + IMU & 5.667 & 5.901 & 0.234 & 20.4\\
+        
+     \end{tabular}
+     \caption{Cumulative errors and the proportion of occupied cells for each combination}
+     \label{tab:my_table}
+ \end{table}
+
+\begin{equation}\label{my_first_equation}
+    \text{prop(occupied)} = \cfrac{\text{Number(occupied\_cells)}}{\text{Number(free\_cells)}}
+\end{equation}
+
+The experimental results were classified by different sensor combinations applied, which were presented in \cref{tab:my_table}. The algorithm combing the LIDAR, ZED odometry, and IMU showed the best mapping performance in all combinations with a minimum cumulative mapping error of 0.074. The mapping performance of the algorithm using LIDAR combinations with a mean cumulative error around 0.11 was better than the algorithm using ZED combinations mean cumulative error with around 0.32. Next, from the last column in \cref{tab:my_table}, it could be seen that the mean proportion of occupied cells of ZED combinations was almost twice that of LIDAR combinations, implying that the maps generated by algorithms base on LIDAR combinations had a little blurry effect. 
 {\small
 \bibliographystyle{IEEEtran}
 \bibliography{references}
